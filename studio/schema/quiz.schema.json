@@ -214,7 +214,7 @@
           "enum": ["draft", "reviewed", "approved"],
           "default": "draft"
         },
-        "cmciTarget": {
+        "cmciDesignIntent": {
           "type": ["string", "null"],
           "enum": ["Solid", "Fragile", "Misconception", null]
         }
