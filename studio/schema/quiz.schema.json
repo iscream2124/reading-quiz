@@ -208,6 +208,15 @@
             "objectId": { "type": "string" },
             "resultFields": { "type": "array", "items": { "type": "string" } }
           }
+        },
+        "reviewStatus": {
+          "type": "string",
+          "enum": ["draft", "reviewed", "approved"],
+          "default": "draft"
+        },
+        "cmciTarget": {
+          "type": ["string", "null"],
+          "enum": ["Solid", "Fragile", "Misconception", null]
         }
       }
     },

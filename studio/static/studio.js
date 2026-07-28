@@ -1553,6 +1553,8 @@ function renderEditor() {
   $('question-select').value = String(currentQuestionIndex);
   $('sg-select').value = normalizeStoryGrammarKey(q.storyGrammar);
   $('type-select').value = q.type;
+  $('review-status-select').value = q.reviewStatus || 'draft';
+  $('cmci-target-select').value = q.cmciTarget || '';
   $('instruction-input').value = q.instruction || '';
   $('hint-input').value = q.hint || '';
   renderChoiceEditor(q);
@@ -1760,6 +1762,8 @@ function applyEditorChanges() {
   try {
     q.storyGrammar = normalizeStoryGrammarKey($('sg-select').value);
     q.type = $('type-select').value;
+    q.reviewStatus = $('review-status-select').value || 'draft';
+    q.cmciTarget = $('cmci-target-select').value || null;
     q.instruction = $('instruction-input').value.trim();
     q.hint = $('hint-input').value.trim();
     q.resources = safeJsonParse($('resources-json').value, 'Resources') || {};
@@ -1976,6 +1980,8 @@ function buildRuleDraft(payload) {
   const mkQ = (number, type, axis, instruction, hint, resources, interaction, scoring, diagnostics) => ({
     qId: `${storyId}_V3_Q${String(number).padStart(2, '0')}`,
     number, type, storyGrammar: axis, instruction, hint, resources, interaction, scoring,
+    reviewStatus: 'draft',
+    cmciTarget: null,
     diagnostics: diagnostics || [{ code: axis + '_gap', threshold: 70, messageKo: SG_KO[axis] + ' \uD56D\uBAA9\uC744 \uB2E4\uC2DC \uD655\uC778\uD560 \uD544\uC694\uAC00 \uC788\uC2B5\uB2C8\uB2E4.' }],
     lrs: { verb: 'answered', objectId: `quiz_${storyId}_v3_Q${String(number).padStart(2, '0')}_${axis}`, resultFields: ['score_raw', 'hint_used'] }
   });
