@@ -3596,8 +3596,8 @@ function exportPreviewHtml() {
   downloadBlob(`${packagedQuiz.story.storyId}_ReadingQuiz.html`, 'text/html;charset=utf-8', previewHtmlForQuiz(packagedQuiz));
 }
 
-function simulateQuiz() {
-  if (!quiz) return;
+async function simulateQuiz() {
+  await loadSample();
 
   // Reset to Q1
   currentQuestionIndex = 0;
