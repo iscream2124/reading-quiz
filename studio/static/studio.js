@@ -3641,7 +3641,23 @@ async function simulateQuiz() {
       mv(to, () => {
         cur.style.transform = 'translate(-50%,-50%) scale(1)';
         cur.style.background = 'rgba(124,58,237,0.85)';
-        setTimeout(cb, 300);
+        // Visually place card into slot
+        const img = from.tagName === 'IMG' ? from : from.querySelector('img');
+        if (img) {
+          const clone = img.cloneNode(true);
+          clone.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:8px;pointer-events:none';
+          to.innerHTML = '';
+          to.style.padding = '0';
+          to.appendChild(clone);
+        } else {
+          to.textContent = from.textContent;
+          to.style.background = '#ede9fe';
+          to.style.color = '#6d28d9';
+          to.style.fontWeight = '700';
+        }
+        from.style.opacity = '0.2';
+        from.style.pointerEvents = 'none';
+        setTimeout(cb, 400);
       });
     });
   }
