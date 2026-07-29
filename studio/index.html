@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Quiz Studio</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&family=Nunito:wght@700;800;900&family=ABeeZee&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="static/studio.css?v=20260729-16">
+<link rel="stylesheet" href="static/studio.css?v=20260729-16">
+<link rel="stylesheet" href="static/quality-controls.css?v=20260729-1">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 </head>
@@ -15,7 +16,7 @@
     <div class="eyebrow">BookeyTalkey</div>
     <h1>Quiz Studio</h1>
   </div>
-  <button class="simulate-btn topbar-simulate" id="simulate-btn">▶ Simulate</button>
+  <button class="simulate-btn topbar-simulate" id="simulate-btn" title="Run an automated review demo with the quiz currently open">Review Demo</button>
 </header>
 
 <main class="studio-grid">
@@ -27,17 +28,13 @@
 
     <div id="left-section-generate" class="left-section active">
     <section class="batch-box">
-      <div class="panel-head compact">
-        <h2>Story Resource</h2>
-      </div>
-
+      <div class="panel-head compact"><h2>Story Resource</h2></div>
       <label class="upload-drop">
         <strong>Upload Story Folder</strong>
         <span>TXT, cover, background, scene images, and audio files</span>
         <input type="file" id="story-package" multiple webkitdirectory directory>
       </label>
       <input type="file" id="resource-replace-file" hidden>
-
       <div class="asset-status" id="package-status">No story folder loaded.</div>
       <div class="resource-summary" id="resource-summary">
         <div class="resource-empty">Upload one OG/CS story folder to classify its files.</div>
@@ -46,7 +43,6 @@
         ↻ <span>Replace Files</span>
         <input type="file" id="story-file-replace" multiple>
       </label>
-
       <label class="field compact-field">
         <span>AI Provider</span>
         <select id="ai-provider">
@@ -54,56 +50,34 @@
           <option value="openai">OpenAI</option>
         </select>
       </label>
-
       <label class="field compact-field">
         <span>API Key</span>
         <input id="api-key" type="password" placeholder="Required for web AI generation">
         <small class="field-note">The key is used only for this browser request and is not saved.</small>
       </label>
-
       <button class="primary-btn compact-primary" id="generate-ai-btn">Generate Quiz</button>
     </section>
     </div>
 
     <div id="left-section-open" class="left-section">
     <section class="select-story-box">
-      <div class="panel-head compact">
-        <h2>Open Existing Quiz</h2>
-      </div>
+      <div class="panel-head compact"><h2>Open Existing Quiz</h2></div>
       <div class="mini-actions select-actions">
         <label class="icon-btn file-label centered" title="Upload generated quiz JSON/XLSX/ZIP">
-          📂 <span>Quiz Upload</span>
+          <span>Quiz Upload</span>
           <input type="file" id="quiz-file" accept=".json,.xlsx,.xls,.zip,application/json" multiple>
         </label>
-        <button class="icon-btn" id="load-sample-btn" title="Load OG0021 sample">★<span>Sample</span></button>
+        <button class="icon-btn" id="load-sample-btn" title="Load OG0021 sample"><span>Sample</span></button>
       </div>
       <div class="asset-status" id="asset-status">No existing quiz loaded.</div>
     </section>
 
     <section class="story-detail-box">
-      <div class="panel-head compact">
-        <h2>Selected Story</h2>
-      </div>
-
-      <label class="field">
-        <span>Story ID</span>
-        <input id="story-id" value="OG0000" placeholder="OG0000">
-      </label>
-
-      <label class="field">
-        <span>Title</span>
-        <input id="story-title" placeholder="Story title">
-      </label>
-
-      <label class="field">
-        <span>Level</span>
-        <input id="story-level" value="Level 1">
-      </label>
-
-      <label class="field">
-        <span>Story Text</span>
-        <textarea id="story-text" placeholder="SC01_ST01_N = ..."></textarea>
-      </label>
+      <div class="panel-head compact"><h2>Selected Story</h2></div>
+      <label class="field"><span>Story ID</span><input id="story-id" value="OG0000" placeholder="OG0000"></label>
+      <label class="field"><span>Title</span><input id="story-title" placeholder="Story title"></label>
+      <label class="field"><span>Level</span><input id="story-level" value="Level 1"></label>
+      <label class="field"><span>Story Text</span><textarea id="story-text" placeholder="SC01_ST01_N = ..."></textarea></label>
     </section>
     </div>
 
@@ -114,25 +88,15 @@
   </aside>
 
   <section class="panel preview-panel">
-    <div class="panel-head">
-      <h2>Preview</h2>
-      <div class="preview-nav" id="preview-nav"></div>
-    </div>
+    <div class="panel-head"><h2>Preview</h2><div class="preview-nav" id="preview-nav"></div></div>
     <div id="preview-stage" class="preview-stage"></div>
   </section>
 
   <aside class="panel editor-panel">
-    <div class="panel-head">
-      <h2>Quiz Editor</h2>
-      <span class="pill" id="schema-pill">quiz-v3.0</span>
-    </div>
+    <div class="panel-head"><h2>Quiz Editor</h2><span class="pill" id="schema-pill">quiz-v3.0</span></div>
 
     <section class="editor-group meta-editor-group">
-      <label class="field">
-        <span>Question No.</span>
-        <select id="question-select"></select>
-      </label>
-
+      <label class="field"><span>Question No.</span><select id="question-select"></select></label>
       <label class="field">
         <span>Story Grammar</span>
         <select id="sg-select">
@@ -144,7 +108,6 @@
           <option value="consequence">Consequence</option>
         </select>
       </label>
-
       <label class="field">
         <span>Question Type</span>
         <select id="type-select">
@@ -156,7 +119,6 @@
           <option value="internal_response_mcq">internal_response_mcq</option>
         </select>
       </label>
-
       <label class="field">
         <span>Review Status</span>
         <select id="review-status-select">
@@ -165,11 +127,10 @@
           <option value="approved">approved</option>
         </select>
       </label>
-
       <label class="field">
         <span>CMCI Design Intent</span>
         <select id="cmci-design-intent-select">
-          <option value="">—</option>
+          <option value="">-</option>
           <option value="Solid">Solid</option>
           <option value="Fragile">Fragile</option>
           <option value="Misconception">Misconception</option>
@@ -178,50 +139,46 @@
     </section>
 
     <section class="editor-group content-editor-group">
-      <label class="field">
-        <span>Instruction</span>
-        <input id="instruction-input">
-      </label>
-
+      <label class="field"><span>Instruction</span><input id="instruction-input"></label>
       <section class="choice-editor-box">
-        <div class="panel-head compact">
-          <h3>Choices & Weights</h3>
-        </div>
+        <div class="panel-head compact"><h3>Choices & Weights</h3></div>
         <div id="choice-editor" class="choice-editor"></div>
         <div id="weight-summary" class="weight-summary"></div>
       </section>
-
-      <label class="field">
-        <span>Hint</span>
-        <input id="hint-input">
-      </label>
+      <label class="field"><span>Hint</span><input id="hint-input"></label>
     </section>
 
-    <label class="field">
-      <span>Resources JSON</span>
-      <textarea class="json-area" id="resources-json"></textarea>
-    </label>
+    <section class="editor-group quality-evidence-group">
+      <div class="panel-head compact"><h3>Evidence & Depth</h3><span class="pill">Required</span></div>
+      <label class="field">
+        <span>Comprehension Depth</span>
+        <select id="comprehension-depth-select">
+          <option value="literal">Literal</option>
+          <option value="inferential">Inferential</option>
+          <option value="integrative">Integrative</option>
+        </select>
+      </label>
+      <label class="field"><span>Evidence Scene IDs</span><input id="evidence-scenes-input" placeholder="SC02, SC03"></label>
+      <label class="field"><span>Evidence Sentence IDs</span><input id="evidence-sentences-input" placeholder="SC02_ST01_N"></label>
+      <label class="field"><span>Author Rationale</span><textarea id="evidence-note-input" placeholder="Explain why this evidence supports the answer and the selected Story Grammar axis."></textarea></label>
+    </section>
 
-    <label class="field">
-      <span>Interaction JSON</span>
-      <textarea class="json-area" id="interaction-json"></textarea>
-    </label>
+    <details class="advanced-editor">
+      <summary>Advanced JSON Editing</summary>
+      <div class="advanced-editor-body">
+        <label class="field"><span>Resources JSON</span><textarea class="json-area" id="resources-json"></textarea></label>
+        <label class="field"><span>Interaction JSON</span><textarea class="json-area" id="interaction-json"></textarea></label>
+        <label class="field"><span>Scoring JSON</span><textarea class="json-area" id="scoring-json"></textarea></label>
+        <label class="field"><span>Diagnostics JSON</span><textarea class="json-area short" id="diagnostics-json"></textarea></label>
+      </div>
+    </details>
 
-    <label class="field">
-      <span>Scoring JSON</span>
-      <textarea class="json-area" id="scoring-json"></textarea>
-    </label>
-
-    <label class="field">
-      <span>Diagnostics JSON</span>
-      <textarea class="json-area short" id="diagnostics-json"></textarea>
-    </label>
-
-    <button class="primary-btn" id="apply-btn">Apply Changes</button>
+    <button class="primary-btn apply-changes-btn" id="apply-btn">Apply Changes</button>
 
     <div class="review-box">
       <h3>Validation</h3>
       <div class="issue-list" id="issue-list">Generate or upload a quiz to see validation notes.</div>
+      <div class="measurement-policy-note" id="measurement-policy-note"></div>
     </div>
 
     <div class="export-box">
@@ -236,5 +193,6 @@
 
 <div id="toast" class="toast" role="status"></div>
 <script src="static/studio.js?v=20260729-16"></script>
+<script src="static/quality-controls.js?v=20260729-1"></script>
 </body>
 </html>
