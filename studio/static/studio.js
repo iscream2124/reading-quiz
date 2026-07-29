@@ -3597,21 +3597,104 @@ function exportPreviewHtml() {
 }
 
 function simulateQuiz() {
-  updateStoryFromInputs();
-  const html = previewHtmlForQuiz(packageQuizForExport(quiz), true);
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
+  if (!quiz) return;
 
-  let overlay = document.getElementById('simulate-overlay');
-  if (overlay) overlay.remove();
-  overlay = document.createElement('div');
-  overlay.id = 'simulate-overlay';
-  overlay.innerHTML = `
-    <div class="sim-modal">
-      <button class="sim-close" onclick="document.getElementById('simulate-overlay').remove()">✕ Close</button>
-      <iframe src="${url}" class="sim-frame"></iframe>
-    </div>`;
-  document.body.appendChild(overlay);
+  // Reset to Q1
+  currentQuestionIndex = 0;
+  renderAll();
+
+  // Remove old cursor
+  const old = document.getElementById('sim-cursor');
+  if (old) old.remove();
+
+  const cur = document.createElement('div');
+  cur.id = 'sim-cursor';
+  cur.style.cssText = 'position:fixed;width:22px;height:22px;border-radius:50%;background:rgba(124,58,237,0.85);border:2.5px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.4);pointer-events:none;z-index:9999;transition:left .45s ease,top .45s ease;transform:translate(-50%,-50%)';
+  document.body.appendChild(cur);
+
+  // Start cursor at Simulate button
+  const sb = $('simulate-btn').getBoundingClientRect();
+  cur.style.left = (sb.left + sb.width / 2) + 'px';
+  cur.style.top  = (sb.top  + sb.height / 2) + 'px';
+
+  function mv(el, cb) {
+    const r = el.getBoundingClientRect();
+    cur.style.left = (r.left + r.width / 2) + 'px';
+    cur.style.top  = (r.top  + r.height / 2) + 'px';
+    setTimeout(cb, 520);
+  }
+
+  function cl(el, cb) {
+    mv(el, () => {
+      cur.style.transform = 'translate(-50%,-50%) scale(.6)';
+      setTimeout(() => {
+        cur.style.transform = 'translate(-50%,-50%) scale(1)';
+        setTimeout(cb, 300);
+      }, 200);
+    });
+  }
+
+  function stepQ() {
+    setTimeout(() => {
+      const stage = $('preview-stage');
+      const q = quiz.questions[currentQuestionIndex];
+
+      // Pick targets based on question type
+      let targets = [];
+      if (q.type === 'emotion_mcq' || q.type === 'internal_response_mcq') {
+        targets = Array.from(stage.querySelectorAll('.option-chip'));
+      } else if (q.type === 'listen_scene_mcq') {
+        targets = Array.from(stage.querySelectorAll('.scene-grid img, .img-card'));
+      } else if (q.type === 'scene_word_unscramble') {
+        targets = Array.from(stage.querySelectorAll('.word-chip'));
+      } else {
+        targets = Array.from(stage.querySelectorAll('.scene-grid img, .img-card, .word-chip, .option-chip'));
+      }
+
+      // Find correct option index
+      const opts = q.interaction?.options || [];
+      let ci = opts.findIndex(o => o.score >= 100 || o.isCorrect);
+      if (ci < 0) ci = 0;
+
+      const doClick = () => {
+        const target = targets[Math.min(ci, targets.length - 1)];
+        if (target) {
+          cl(target, goNext);
+        } else {
+          goNext();
+        }
+      };
+
+      // Hover a decoy first if there are multiple targets
+      if (targets.length > 1) {
+        const decoy = targets[ci === 0 ? 1 : 0];
+        mv(decoy, doClick);
+      } else {
+        doClick();
+      }
+    }, 900);
+  }
+
+  function goNext() {
+    setTimeout(() => {
+      const nextIdx = currentQuestionIndex + 1;
+      if (nextIdx >= quiz.questions.length) {
+        setTimeout(() => cur.remove(), 800);
+        return;
+      }
+      const dots = $('preview-nav').querySelectorAll('.q-dot');
+      const dot = dots[nextIdx];
+      if (dot) {
+        cl(dot, stepQ);
+      } else {
+        currentQuestionIndex = nextIdx;
+        renderAll();
+        stepQ();
+      }
+    }, 600);
+  }
+
+  setTimeout(stepQ, 700);
 }
 
 function loadJsonFile(file) {
