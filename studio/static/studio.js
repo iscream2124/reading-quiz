@@ -3183,7 +3183,7 @@ function packageQuizForExport(sourceQuiz) {
   return packaged;
 }
 
-function previewHtmlForQuiz(sourceQuiz) {
+function previewHtmlForQuiz(sourceQuiz, simulate) {
   const data = JSON.stringify(sourceQuiz).replace(/</g, '\\u003c');
   const title = escapeHtml(sourceQuiz.story?.title || sourceQuiz.story?.storyId || 'Reading Quiz');
   return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} Reading Quiz</title><style>
@@ -3234,6 +3234,33 @@ function renderOptions(q){var s=state(q,function(){return {selected:''}});var im
 function body(q){if(q.type==='story_sequence_drag')return renderQ1(q);if(q.type==='setting_slot_drag')return renderQ2(q);if(q.type==='listen_scene_mcq')return renderQ3(q);if(q.type==='scene_word_unscramble')return renderQ4(q);return renderOptions(q);}
 function render(){document.querySelector('.page').style.setProperty('--bg','url("'+asset(quiz.assets.backgroundImage,'image')+'")');document.getElementById('title').textContent=quiz.story.title||quiz.story.storyId;document.getElementById('meta').textContent=(quiz.story.storyId||'')+' - '+(quiz.story.level||'');renderNav();var q=quiz.questions[current];var id=q.qId||q.number;if(!rtStart[id])rtStart[id]=Date.now();document.getElementById('app').innerHTML='<section class="card"><span class="pill">Q'+(q.number||current+1)+' - '+esc(q.storyGrammar||'')+'</span><div class="instruction">'+esc(q.instruction||'')+'</div>'+body(q)+'<div class="hint"><img src="'+esc(asset(quiz.assets.hintCharacter,'image'))+'" alt="Bookey"><span>'+esc(q.hint||'')+'</span></div><div class="actions"><button class="check" onclick="check()">Check</button><button class="next" onclick="current=Math.min(quiz.questions.length-1,current+1);render()">Next</button></div>'+(checked[id]!=null?'<div class="score">Score: '+checked[id]+' / 100 · '+(icData[id]?'✓ Correct':'✗ Incorrect')+' · RT: '+(rtData[id]||'?')+'s'+(skData[id]?' · Selected: '+esc(skData[id]):'')+'</div>':'')+'</section>';}
 render();
+${simulate ? `(function(){
+var cur=document.createElement('div');
+cur.style.cssText='position:fixed;width:22px;height:22px;border-radius:50%;background:rgba(124,58,237,0.85);border:2.5px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.4);pointer-events:none;z-index:9999;transition:left .5s ease,top .5s ease;transform:translate(-50%,-50%)';
+document.body.appendChild(cur);
+cur.style.left=(window.innerWidth/2)+'px';cur.style.top=(window.innerHeight/2)+'px';
+function mv(el,cb){var r=el.getBoundingClientRect();cur.style.left=(r.left+r.width/2)+'px';cur.style.top=(r.top+r.height/2)+'px';setTimeout(cb,600);}
+function cl(el,cb){mv(el,function(){cur.style.transform='translate(-50%,-50%) scale(.65)';setTimeout(function(){el.click();cur.style.transform='translate(-50%,-50%) scale(1)';setTimeout(cb,350);},220);});}
+function step(){setTimeout(function(){
+var q=quiz.questions[current];var id=q.qId||q.number;
+if(checked[id]!=null){var nb=document.querySelector('.next');if(nb&&current<quiz.questions.length-1)cl(nb,step);return;}
+var opts=(q.interaction&&q.interaction.options)||[];
+var ci=opts.findIndex(function(o){return o.score>=100||o.isCorrect;});if(ci<0)ci=0;
+if(q.type==='emotion_mcq'||q.type==='internal_response_mcq'){
+  var els=document.querySelectorAll('.option');if(!els[ci])return;
+  cl(els[ci],function(){setTimeout(function(){var cb=document.querySelector('.check');if(cb)cl(cb,function(){setTimeout(step,1400);});},300);});
+}else if(q.type==='listen_scene_mcq'){
+  var els=document.querySelectorAll('.scene-grid .img-card');var t=els[ci]||els[0];if(!t)return;
+  cl(t,function(){setTimeout(function(){var cb=document.querySelector('.check');if(cb)cl(cb,function(){setTimeout(step,1400);});},300);});
+}else{
+  if(q.type==='story_sequence_drag'){answers[id]={slots:(q.interaction.correct||[]).slice()};}
+  else if(q.type==='scene_word_unscramble'){answers[id]={words:(q.interaction.correct||[]).map(function(w,i){return i+':'+w;})};}
+  else if(q.type==='setting_slot_drag'){var sl={};(q.interaction.slots||[]).forEach(function(s){var sc=q.scoring&&q.scoring.partial;if(sc&&sc[s.key])sl[s.key]=sc[s.key];});answers[id]={slots:sl};}
+  render();setTimeout(function(){var cb=document.querySelector('.check');if(cb)cl(cb,function(){setTimeout(step,1400);});},900);
+}
+},1200);}
+setTimeout(step,1800);
+})();` : ''}
 </script></body></html>`;
 }
 
@@ -3571,7 +3598,7 @@ function exportPreviewHtml() {
 
 function simulateQuiz() {
   updateStoryFromInputs();
-  const html = previewHtmlForQuiz(packageQuizForExport(quiz));
+  const html = previewHtmlForQuiz(packageQuizForExport(quiz), true);
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
 
