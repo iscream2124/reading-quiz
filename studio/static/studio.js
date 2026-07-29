@@ -3618,10 +3618,13 @@ async function simulateQuiz() {
   cur.style.top  = (sb.top  + sb.height / 2) + 'px';
 
   function mv(el, cb) {
-    const r = el.getBoundingClientRect();
-    cur.style.left = (r.left + r.width / 2) + 'px';
-    cur.style.top  = (r.top  + r.height / 2) + 'px';
-    setTimeout(cb, 520);
+    try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch(_) {}
+    setTimeout(() => {
+      const r = el.getBoundingClientRect();
+      cur.style.left = (r.left + r.width / 2) + 'px';
+      cur.style.top  = (r.top  + r.height / 2) + 'px';
+      setTimeout(cb, 520);
+    }, 250);
   }
 
   function cl(el, cb) {
