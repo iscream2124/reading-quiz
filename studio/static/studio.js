@@ -3638,6 +3638,7 @@ async function simulateQuiz() {
     mv(el, () => {
       cur.style.transform = 'translate(-50%,-50%) scale(.6)';
       setTimeout(() => {
+        try { el.click(); } catch(_) {}
         cur.style.transform = 'translate(-50%,-50%) scale(1)';
         setTimeout(cb, 300);
       }, 200);
