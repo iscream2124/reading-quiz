@@ -3569,6 +3569,14 @@ function exportPreviewHtml() {
   downloadBlob(`${packagedQuiz.story.storyId}_ReadingQuiz.html`, 'text/html;charset=utf-8', previewHtmlForQuiz(packagedQuiz));
 }
 
+function simulateQuiz() {
+  updateStoryFromInputs();
+  const html = previewHtmlForQuiz(packageQuizForExport(quiz));
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+}
+
 function loadJsonFile(file) {
   if (!file) return;
   const reader = new FileReader();
@@ -3628,6 +3636,7 @@ function bindEvents() {
   $('export-reading-btn').onclick = () => exportWorkbook('reading');
   $('export-dev-btn').onclick = () => exportWorkbook('dev');
   $('export-html-btn').onclick = exportPreviewHtml;
+  $('simulate-btn').onclick = simulateQuiz;
 }
 
 bindEvents();
