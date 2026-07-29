@@ -678,6 +678,32 @@ textarea{min-height:210px;resize:vertical;line-height:1.45}
 .lrs-ok{color:#10b981;font-weight:800}
 .lrs-bad{color:#ef4444;font-weight:800}
 .lrs-note{margin-top:14px;padding:10px 12px;background:#fef3c7;border-radius:8px;font-size:11px;color:#78350f}
+.lrs-section{margin-top:22px;padding-top:16px;border-top:1px solid #e5e7eb}
+.lrs-section h4{margin:0 0 10px 0;font-size:14px;color:#111827;display:flex;align-items:center;gap:8px}
+.lrs-tag{background:#ede9fe;color:#6d28d9;font-size:10px;padding:2px 8px;border-radius:99px;font-weight:600}
+.lrs-subhead{margin-top:14px;margin-bottom:8px;font-size:12px;font-weight:700;color:#4b5563;display:flex;align-items:center;gap:8px}
+.lrs-src{font-size:10px;color:#9ca3af;font-weight:500}
+.lrs-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lrs-chip{background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;font-size:12px}
+.lrs-chip span{color:#6b7280}
+.lrs-chip strong{color:#111827;font-weight:700}
+.lrs-ok-chip{background:#d1fae5;border-color:#a7f3d0}
+.lrs-ok-chip strong{color:#065f46}
+.lrs-warn-chip{background:#fef3c7;border-color:#fde68a}
+.lrs-warn-chip strong{color:#92400e}
+.lrs-bad-chip{background:#fee2e2;border-color:#fecaca}
+.lrs-bad-chip strong{color:#991b1b}
+.lrs-mini{width:100%;border-collapse:collapse;font-size:12px}
+.lrs-mini td{padding:5px 6px;border-bottom:1px solid #f3f4f6}
+.lrs-mini td:first-child{color:#4b5563;font-weight:500;width:35%}
+.lrs-mini-summary{grid-template-columns:repeat(3,1fr) !important;margin-top:8px}
+.lrs-bar{position:relative;background:#f3f4f6;border-radius:99px;height:16px;overflow:hidden}
+.lrs-bar-fill{height:100%;border-radius:99px;transition:width .4s ease}
+.lrs-bar span{position:absolute;right:8px;top:0;line-height:16px;font-size:10px;font-weight:700;color:#111827}
+.lrs-diag{background:#fff7ed;border-left:3px solid #f97316;padding:10px 12px;margin-top:8px;border-radius:6px;font-size:12px}
+.lrs-diag-q{font-weight:700;color:#9a3412;margin-bottom:4px}
+.lrs-diag-reason{color:#7c2d12;margin-top:4px}
+.lrs-diag-hint{color:#57534e;font-size:11px;margin-top:6px;padding-top:6px;border-top:1px dashed #fed7aa}
 .review-box{
   margin-top:18px;
   padding-top:14px;

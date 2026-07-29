@@ -3687,18 +3687,27 @@ async function simulateQuiz() {
     const opts = q.interaction?.options || [];
     let ci = opts.findIndex(o => o.score >= 100 || o.isCorrect);
     if (ci < 0) ci = 0;
+    const selectedIdx = window._simSelectedIdx != null ? window._simSelectedIdx : ci;
+    const selectedOpt = opts[selectedIdx];
     const rt = Math.round((Date.now() - qStartTime) / 100) / 10;
+    const score = selectedOpt ? (selectedOpt.score != null ? selectedOpt.score : (selectedIdx === ci ? 100 : 0)) : 100;
     simLog.push({
       qId: q.qId || `Q${q.number || currentQuestionIndex + 1}`,
       number: q.number || currentQuestionIndex + 1,
       storyGrammar: q.storyGrammar || '',
       type: q.type || '',
-      selected_key: currentSelectedKey || (opts[ci]?.key || '-'),
-      is_correct: true,
-      score_raw: 100,
+      instruction: q.instruction || '',
+      selected_key: currentSelectedKey || (selectedOpt?.key || '-'),
+      selected_text: selectedOpt?.text || '',
+      correct_key: opts[ci]?.key || '',
+      correct_text: opts[ci]?.text || '',
+      diagnostic: selectedOpt?.diagnostic || (q.diagnostics && q.diagnostics[0]) || '',
+      is_correct: score >= 100,
+      score_raw: score,
       response_time_sec: rt,
       hint_used: false
     });
+    window._simSelectedIdx = null;
   }
 
   function stepQ() {
@@ -3746,16 +3755,25 @@ async function simulateQuiz() {
       const opts = q.interaction?.options || [];
       let ci = opts.findIndex(o => o.score >= 100 || o.isCorrect);
       if (ci < 0) ci = 0;
-      currentSelectedKey = opts[ci]?.key || String.fromCharCode(65 + ci);
+
+      // Inject wrong-answer scenario on Q3 and Q5 to demonstrate diagnostics
+      const qNum = q.number || currentQuestionIndex + 1;
+      let pickIdx = ci;
+      if ((qNum === 3 || qNum === 5) && opts.length > 1) {
+        const wrong = opts.findIndex((o, i) => i !== ci && (o.score != null ? o.score < 100 : true));
+        if (wrong >= 0) pickIdx = wrong;
+      }
+      window._simSelectedIdx = pickIdx;
+      currentSelectedKey = opts[pickIdx]?.key || String.fromCharCode(65 + pickIdx);
 
       const doClick = () => {
-        const target = targets[Math.min(ci, targets.length - 1)];
+        const target = targets[Math.min(pickIdx, targets.length - 1)];
         if (target) cl(target, () => { logCurrent(); goNext(); });
         else { logCurrent(); goNext(); }
       };
 
       if (targets.length > 1) {
-        mv(targets[ci === 0 ? 1 : 0], doClick);
+        mv(targets[pickIdx === 0 ? 1 : 0], doClick);
       } else {
         doClick();
       }
@@ -3789,11 +3807,39 @@ function showLRSReport(log) {
   const nav = $('preview-nav');
   const total = log.length;
   const correct = log.filter(l => l.is_correct).length;
-  const avgRT = total ? (log.reduce((s, l) => s + l.response_time_sec, 0) / total).toFixed(1) : 0;
   const totalRT = log.reduce((s, l) => s + l.response_time_sec, 0).toFixed(1);
   const sgLabels = { setting: 'Setting', initiating_event: 'Initiating Event', attempt: 'Attempt', reaction: 'Reaction', internal_response: 'Internal Response', consequence: 'Consequence' };
 
-  const rows = log.map(l => `
+  // Comprehension = SG 6 elements (measured from Quiz)
+  const sgScore = (sg) => {
+    const q = log.find(l => l.storyGrammar === sg);
+    return q ? q.score_raw : 0;
+  };
+  const compAvg = Math.round(['setting','initiating_event','attempt','consequence','reaction','internal_response'].reduce((s,k)=>s+sgScore(k),0)/6);
+
+  // Mock values for domains not measured by the quiz (would come from Talking / Read Aloud / Chat Room)
+  const mock = {
+    level: quiz.story?.level || 'Level 2',
+    kp: 1240,
+    booksRead: 8,
+    completionRate: 87,
+    readingTimeTotal: '4h 22m',
+    readingTimeAvg: '33m',
+    topGenre: 'Adventure',
+    pron: { accuracy: 78, wcpm: 45, topError: 'R/L Confusion (rice ↔ lice)', overall: 78 },
+    vocab: { learned: 24, missed: 3, used: 12 },
+    expr: { confidence: 60, automaticity: 75, latency: 82, fluency: 70, prosody: 68, overall: 71 },
+    redFlags: { load: 'Normal (48 WPM)', accuracy: 88, breakdown: 'Low', errorPattern: 'Digraph Misread' },
+    affect: { happy: 62, neutral: 24, sad: 10, angry: 4 }
+  };
+
+  const bar = (v, color='#7c3aed') => `<div class="lrs-bar"><div class="lrs-bar-fill" style="width:${v}%;background:${color}"></div><span>${v}</span></div>`;
+  const chip = (label, val, cls='') => `<div class="lrs-chip ${cls}"><span>${label}</span><strong>${val}</strong></div>`;
+
+  const sgRows = ['setting','initiating_event','attempt','consequence','reaction','internal_response']
+    .map(k => `<tr><td>${sgLabels[k]}</td><td style="width:60%">${bar(sgScore(k))}</td></tr>`).join('');
+
+  const qRows = log.map(l => `
     <tr>
       <td><strong>Q${l.number}</strong></td>
       <td>${escapeHtml(sgLabels[l.storyGrammar] || l.storyGrammar)}</td>
@@ -3810,18 +3856,119 @@ function showLRSReport(log) {
         <h3>LRS 학습자 리포트</h3>
         <span class="lrs-sub">${escapeHtml(quiz.story?.title || quiz.story?.storyId || '')} · Simulated Learner</span>
       </div>
-      <div class="lrs-summary">
-        <div class="lrs-kpi"><div class="lrs-kpi-v">${correct}/${total}</div><div class="lrs-kpi-l">Correct</div></div>
-        <div class="lrs-kpi"><div class="lrs-kpi-v">${Math.round(correct/total*100)}%</div><div class="lrs-kpi-l">Accuracy</div></div>
-        <div class="lrs-kpi"><div class="lrs-kpi-v">${avgRT}s</div><div class="lrs-kpi-l">Avg RT</div></div>
-        <div class="lrs-kpi"><div class="lrs-kpi-v">${totalRT}s</div><div class="lrs-kpi-l">Total Time</div></div>
-      </div>
-      <table class="lrs-table">
-        <thead><tr><th>Q</th><th>SG</th><th>Type</th><th>Selected</th><th>Result</th><th>Score</th><th>RT</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
+
+      <section class="lrs-section">
+        <h4>1. 프로필</h4>
+        <div class="lrs-grid">
+          ${chip('나의 레벨', mock.level)}
+          ${chip('나의 포인트 (KP)', mock.kp)}
+        </div>
+      </section>
+
+      <section class="lrs-section">
+        <h4>2. 독서 활동 <span class="lrs-tag">Reading Activity</span></h4>
+        <div class="lrs-grid">
+          ${chip('읽은 책 수', mock.booksRead)}
+          ${chip('완독률', mock.completionRate + '%')}
+          ${chip('독서 시간 (Total)', mock.readingTimeTotal)}
+          ${chip('독서 시간 (평균)', mock.readingTimeAvg)}
+          ${chip('도서 선호도', mock.topGenre)}
+        </div>
+      </section>
+
+      <section class="lrs-section">
+        <h4>3. 영어 실력 <span class="lrs-tag">English Skills</span></h4>
+
+        <div class="lrs-subhead">Pronunciation <span class="lrs-src">Read Aloud + Talking + Chat Room · 고대 API</span></div>
+        <table class="lrs-mini">
+          <tr><td>Accuracy</td><td>${bar(mock.pron.accuracy,'#f59e0b')}</td></tr>
+          <tr><td>WCPM</td><td>${mock.pron.wcpm}</td></tr>
+          <tr><td>Top Error Pattern</td><td class="muted">${mock.pron.topError}</td></tr>
+          <tr><td><strong>Overall</strong></td><td>${bar(mock.pron.overall,'#f59e0b')}</td></tr>
+        </table>
+
+        <div class="lrs-subhead">Vocabulary <span class="lrs-src">Key Word + Story Word · Talking</span></div>
+        <div class="lrs-grid">
+          ${chip('Words Learned', mock.vocab.learned)}
+          ${chip('계속 틀리는 단어', mock.vocab.missed)}
+          ${chip('Word Used (Talking)', mock.vocab.used)}
+        </div>
+
+        <div class="lrs-subhead">Comprehension <span class="lrs-src">Story Grammar 6 요소 · Quiz (실측)</span></div>
+        <table class="lrs-mini">${sgRows}</table>
+        <div class="lrs-summary lrs-mini-summary">
+          <div class="lrs-kpi"><div class="lrs-kpi-v">${correct}/${total}</div><div class="lrs-kpi-l">Correct</div></div>
+          <div class="lrs-kpi"><div class="lrs-kpi-v">${compAvg}</div><div class="lrs-kpi-l">Comp Score</div></div>
+          <div class="lrs-kpi"><div class="lrs-kpi-v">${totalRT}s</div><div class="lrs-kpi-l">Total RT</div></div>
+        </div>
+
+        <div class="lrs-subhead">Expression <span class="lrs-src">Talking + Chat Room · 고대 API (감정)</span></div>
+        <table class="lrs-mini">
+          <tr><td>Confidence</td><td>${bar(mock.expr.confidence,'#10b981')}</td></tr>
+          <tr><td>Automaticity</td><td>${bar(mock.expr.automaticity,'#10b981')}</td></tr>
+          <tr><td>Latency</td><td>${bar(mock.expr.latency,'#10b981')}</td></tr>
+          <tr><td>Fluency</td><td>${bar(mock.expr.fluency,'#10b981')}</td></tr>
+          <tr><td>Prosody</td><td>${bar(mock.expr.prosody,'#10b981')}</td></tr>
+          <tr><td><strong>Overall</strong></td><td>${bar(mock.expr.overall,'#10b981')}</td></tr>
+        </table>
+      </section>
+
+      <section class="lrs-section">
+        <h4>4. 독서 위험 신호 <span class="lrs-tag">Reading Red Flags</span></h4>
+        <div class="lrs-grid">
+          ${chip('학습 부담 신호', mock.redFlags.load, 'lrs-ok-chip')}
+          ${chip('정확도', mock.redFlags.accuracy + '%')}
+          ${chip('이해 붕괴도', mock.redFlags.breakdown, 'lrs-ok-chip')}
+          ${chip('오독 패턴', mock.redFlags.errorPattern, 'lrs-warn-chip')}
+        </div>
+      </section>
+
+      <section class="lrs-section">
+        <h4>5. 감정 분포 <span class="lrs-tag">Affect (독후 감정)</span></h4>
+        <div class="lrs-grid">
+          ${chip('😊 Happy', mock.affect.happy + '%', 'lrs-ok-chip')}
+          ${chip('😐 Neutral', mock.affect.neutral + '%')}
+          ${chip('😢 Sad', mock.affect.sad + '%', 'lrs-warn-chip')}
+          ${chip('😠 Angry', mock.affect.angry + '%', 'lrs-bad-chip')}
+        </div>
+      </section>
+
+      ${(() => {
+        const wrong = log.filter(l => !l.is_correct);
+        if (!wrong.length) return '';
+        const diagMap = {
+          setting: '이야기의 배경(시간/장소/상황)을 놓쳤습니다. 배경 정보에 밑줄 긋기, 인물이 어디에 있는지 그림으로 표시하기 활동을 권장합니다.',
+          initiating_event: '이야기의 시작 사건(문제 상황)을 파악하지 못했습니다. "이 문제가 왜 생겼지?"를 물어보며 다시 읽기.',
+          attempt: '주인공의 시도/해결 행동을 놓쳤습니다. 행동 동사 하이라이트 후 순서대로 정리하기.',
+          consequence: '사건의 결과 파악이 부족합니다. "그래서 어떻게 됐어?" 질문으로 결말 요약 연습.',
+          reaction: '인물의 감정 반응 추론이 어려웠습니다. 감정 카드 매칭 활동 권장.',
+          internal_response: '인물의 속마음/의도 추론이 약합니다. Think-aloud (생각 소리내기) 훈련 권장.'
+        };
+        const rows = wrong.map(l => `
+          <div class="lrs-diag">
+            <div class="lrs-diag-q">Q${l.number} · ${sgLabels[l.storyGrammar]} · Score ${l.score_raw}/100</div>
+            <div>문항: ${escapeHtml(l.instruction)}</div>
+            <div>선택: <strong>${escapeHtml(l.selected_text || l.selected_key)}</strong> · 정답: <strong>${escapeHtml(l.correct_text || l.correct_key)}</strong></div>
+            ${l.diagnostic ? `<div class="lrs-diag-reason">진단: ${escapeHtml(l.diagnostic)}</div>` : ''}
+            <div class="lrs-diag-hint">📖 부족한 부분: ${diagMap[l.storyGrammar] || 'Story Grammar 이해 강화 필요.'}</div>
+          </div>`).join('');
+        return `<section class="lrs-section">
+          <h4>6. 틀린 문항 진단 <span class="lrs-tag">${wrong.length}건</span></h4>
+          ${rows}
+        </section>`;
+      })()}
+
+      <section class="lrs-section">
+        <h4>7. Quiz 상세 로그</h4>
+        <table class="lrs-table">
+          <thead><tr><th>Q</th><th>SG</th><th>Type</th><th>Selected</th><th>Result</th><th>Score</th><th>RT</th></tr></thead>
+          <tbody>${qRows}</tbody>
+        </table>
+      </section>
+
       <div class="lrs-note">
-        <strong>Fields captured:</strong> score_raw · is_correct · response_time_sec · selected_key · hint_used
+        <strong>수집 필드:</strong> score_raw · is_correct · response_time_sec · selected_key · hint_used<br>
+        <strong>측정 데이터:</strong> Comprehension (SG 6요소, Quiz 실측). 나머지 도메인은 Talking/Read Aloud/Chat Room 세션 수집 값이 표시됩니다 (샘플).
       </div>
     </div>`;
   nav.innerHTML = `<button class="icon-btn" onclick="renderAll()">✕ Close Report</button>`;
