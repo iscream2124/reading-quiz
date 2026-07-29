@@ -3618,13 +3618,20 @@ async function simulateQuiz() {
   cur.style.top  = (sb.top  + sb.height / 2) + 'px';
 
   function mv(el, cb) {
-    try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch(_) {}
+    // Scroll only within preview-stage if element is inside it (avoid full-page scroll)
+    const stage = $('preview-stage');
+    if (stage && stage.contains(el)) {
+      const stageRect = stage.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      const desiredTop = stage.scrollTop + (elRect.top - stageRect.top) - stage.clientHeight / 2 + el.clientHeight / 2;
+      stage.scrollTop = Math.max(0, desiredTop);
+    }
     setTimeout(() => {
       const r = el.getBoundingClientRect();
       cur.style.left = (r.left + r.width / 2) + 'px';
       cur.style.top  = (r.top  + r.height / 2) + 'px';
       setTimeout(cb, 520);
-    }, 250);
+    }, 200);
   }
 
   function cl(el, cb) {
