@@ -662,6 +662,7 @@ textarea{min-height:210px;resize:vertical;line-height:1.45}
 }
 .simulate-btn{background:#7c3aed;color:#fff;border-color:#7c3aed;font-weight:700}
 .simulate-btn:hover{background:#6d28d9;border-color:#6d28d9}
+.topbar-simulate{padding:10px 20px;font-size:15px;border-radius:999px;border:none;cursor:pointer;white-space:nowrap}
 .review-box{
   margin-top:18px;
   padding-top:14px;
