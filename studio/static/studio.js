@@ -3574,7 +3574,18 @@ function simulateQuiz() {
   const html = previewHtmlForQuiz(packageQuizForExport(quiz));
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
-  window.open(url, '_blank');
+
+  let overlay = document.getElementById('simulate-overlay');
+  if (overlay) overlay.remove();
+
+  overlay = document.createElement('div');
+  overlay.id = 'simulate-overlay';
+  overlay.innerHTML = `
+    <div class="simulate-modal">
+      <button class="simulate-close" onclick="document.getElementById('simulate-overlay').remove()">✕ Close</button>
+      <iframe src="${url}" class="simulate-iframe" allowfullscreen></iframe>
+    </div>`;
+  document.body.appendChild(overlay);
 }
 
 function loadJsonFile(file) {
