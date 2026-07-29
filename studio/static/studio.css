@@ -663,7 +663,11 @@ textarea{min-height:210px;resize:vertical;line-height:1.45}
 .simulate-btn{background:#7c3aed;color:#fff;border-color:#7c3aed;font-weight:700}
 .simulate-btn:hover{background:#6d28d9;border-color:#6d28d9}
 .topbar-simulate{padding:10px 20px;font-size:15px;border-radius:999px;border:none;cursor:pointer;white-space:nowrap}
-.preview-stage.simulating{padding:0;overflow:hidden;background:none}
+#simulate-overlay{position:fixed;inset:0;z-index:9999;pointer-events:none;display:flex;align-items:center;justify-content:center}
+.sim-modal{pointer-events:all;position:relative;width:420px;height:88vh;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.25);display:flex;flex-direction:column}
+.sim-close{position:absolute;top:10px;right:10px;z-index:1;background:rgba(255,255,255,.92);border:1px solid #d1d5db;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;color:#374151}
+.sim-close:hover{background:#f3f4f6}
+.sim-frame{flex:1;width:100%;border:none}
 .review-box{
   margin-top:18px;
   padding-top:14px;
