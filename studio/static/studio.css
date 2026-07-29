@@ -664,6 +664,20 @@ textarea{min-height:210px;resize:vertical;line-height:1.45}
 .simulate-btn:hover{background:#6d28d9;border-color:#6d28d9}
 .topbar-simulate{padding:10px 20px;font-size:15px;border-radius:999px;border:none;cursor:pointer;white-space:nowrap}
 #sim-cursor{position:fixed;pointer-events:none;z-index:9999}
+.lrs-report{background:#fff;border-radius:16px;padding:22px;box-shadow:0 4px 20px rgba(0,0,0,.06);font-family:'Noto Sans KR',sans-serif;color:#1f2937}
+.lrs-head h3{margin:0 0 4px 0;font-size:18px;color:#7c3aed}
+.lrs-sub{font-size:12px;color:#6b7280}
+.lrs-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
+.lrs-kpi{background:#f5f3ff;border-radius:10px;padding:12px;text-align:center}
+.lrs-kpi-v{font-size:20px;font-weight:800;color:#6d28d9}
+.lrs-kpi-l{font-size:11px;color:#6b7280;margin-top:2px}
+.lrs-table{width:100%;border-collapse:collapse;font-size:12px}
+.lrs-table th{background:#f9fafb;padding:8px 6px;text-align:left;font-weight:700;color:#4b5563;border-bottom:2px solid #e5e7eb}
+.lrs-table td{padding:7px 6px;border-bottom:1px solid #f3f4f6}
+.lrs-table td.muted{color:#9ca3af;font-size:11px}
+.lrs-ok{color:#10b981;font-weight:800}
+.lrs-bad{color:#ef4444;font-weight:800}
+.lrs-note{margin-top:14px;padding:10px 12px;background:#fef3c7;border-radius:8px;font-size:11px;color:#78350f}
 .review-box{
   margin-top:18px;
   padding-top:14px;

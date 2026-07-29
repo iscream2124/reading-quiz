@@ -3678,32 +3678,60 @@ async function simulateQuiz() {
     drag(cards[i], slots[i], () => dragSequence(cards, slots, i + 1, cb));
   }
 
+  const simLog = [];
+  let qStartTime = 0;
+  let currentSelectedKey = null;
+
+  function logCurrent() {
+    const q = quiz.questions[currentQuestionIndex];
+    const opts = q.interaction?.options || [];
+    let ci = opts.findIndex(o => o.score >= 100 || o.isCorrect);
+    if (ci < 0) ci = 0;
+    const rt = Math.round((Date.now() - qStartTime) / 100) / 10;
+    simLog.push({
+      qId: q.qId || `Q${q.number || currentQuestionIndex + 1}`,
+      number: q.number || currentQuestionIndex + 1,
+      storyGrammar: q.storyGrammar || '',
+      type: q.type || '',
+      selected_key: currentSelectedKey || (opts[ci]?.key || '-'),
+      is_correct: true,
+      score_raw: 100,
+      response_time_sec: rt,
+      hint_used: false
+    });
+  }
+
   function stepQ() {
     setTimeout(() => {
       const stage = $('preview-stage');
       const q = quiz.questions[currentQuestionIndex];
+      qStartTime = Date.now();
+      currentSelectedKey = null;
 
       if (q.type === 'story_sequence_drag') {
         const cards = Array.from(stage.querySelectorAll('.scene-grid img, .scene-grid .img-card'));
         const slots = Array.from(stage.querySelectorAll('.sequence-slots .slot'));
-        dragSequence(cards, slots, 0, goNext);
+        currentSelectedKey = 'sequence';
+        dragSequence(cards, slots, 0, () => { logCurrent(); goNext(); });
         return;
       }
 
       if (q.type === 'setting_slot_drag') {
         const chips = Array.from(stage.querySelectorAll('.word-chip'));
         const slots = Array.from(stage.querySelectorAll('.setting-slots .slot'));
-        dragSequence(chips, slots, 0, goNext);
+        currentSelectedKey = 'slots';
+        dragSequence(chips, slots, 0, () => { logCurrent(); goNext(); });
         return;
       }
 
       if (q.type === 'scene_word_unscramble') {
         const chips = Array.from(stage.querySelectorAll('.word-chip'));
+        currentSelectedKey = 'words';
         if (chips.length) {
           let i = 0;
-          const next = () => { i++; if (i < chips.length) cl(chips[i], next); else goNext(); };
+          const next = () => { i++; if (i < chips.length) cl(chips[i], next); else { logCurrent(); goNext(); } };
           cl(chips[0], next);
-        } else goNext();
+        } else { logCurrent(); goNext(); }
         return;
       }
 
@@ -3718,10 +3746,12 @@ async function simulateQuiz() {
       const opts = q.interaction?.options || [];
       let ci = opts.findIndex(o => o.score >= 100 || o.isCorrect);
       if (ci < 0) ci = 0;
+      currentSelectedKey = opts[ci]?.key || String.fromCharCode(65 + ci);
 
       const doClick = () => {
         const target = targets[Math.min(ci, targets.length - 1)];
-        if (target) cl(target, goNext); else goNext();
+        if (target) cl(target, () => { logCurrent(); goNext(); });
+        else { logCurrent(); goNext(); }
       };
 
       if (targets.length > 1) {
@@ -3736,7 +3766,7 @@ async function simulateQuiz() {
     setTimeout(() => {
       const nextIdx = currentQuestionIndex + 1;
       if (nextIdx >= quiz.questions.length) {
-        setTimeout(() => cur.remove(), 800);
+        setTimeout(() => { cur.remove(); showLRSReport(simLog); }, 800);
         return;
       }
       const dots = $('preview-nav').querySelectorAll('.q-dot');
@@ -3752,6 +3782,49 @@ async function simulateQuiz() {
   }
 
   setTimeout(stepQ, 700);
+}
+
+function showLRSReport(log) {
+  const stage = $('preview-stage');
+  const nav = $('preview-nav');
+  const total = log.length;
+  const correct = log.filter(l => l.is_correct).length;
+  const avgRT = total ? (log.reduce((s, l) => s + l.response_time_sec, 0) / total).toFixed(1) : 0;
+  const totalRT = log.reduce((s, l) => s + l.response_time_sec, 0).toFixed(1);
+  const sgLabels = { setting: 'Setting', initiating_event: 'Initiating Event', attempt: 'Attempt', reaction: 'Reaction', internal_response: 'Internal Response', consequence: 'Consequence' };
+
+  const rows = log.map(l => `
+    <tr>
+      <td><strong>Q${l.number}</strong></td>
+      <td>${escapeHtml(sgLabels[l.storyGrammar] || l.storyGrammar)}</td>
+      <td class="muted">${escapeHtml(l.type)}</td>
+      <td>${escapeHtml(l.selected_key)}</td>
+      <td>${l.is_correct ? '<span class="lrs-ok">✓</span>' : '<span class="lrs-bad">✗</span>'}</td>
+      <td>${l.score_raw}</td>
+      <td>${l.response_time_sec}s</td>
+    </tr>`).join('');
+
+  stage.innerHTML = `
+    <div class="lrs-report">
+      <div class="lrs-head">
+        <h3>LRS 학습자 리포트</h3>
+        <span class="lrs-sub">${escapeHtml(quiz.story?.title || quiz.story?.storyId || '')} · Simulated Learner</span>
+      </div>
+      <div class="lrs-summary">
+        <div class="lrs-kpi"><div class="lrs-kpi-v">${correct}/${total}</div><div class="lrs-kpi-l">Correct</div></div>
+        <div class="lrs-kpi"><div class="lrs-kpi-v">${Math.round(correct/total*100)}%</div><div class="lrs-kpi-l">Accuracy</div></div>
+        <div class="lrs-kpi"><div class="lrs-kpi-v">${avgRT}s</div><div class="lrs-kpi-l">Avg RT</div></div>
+        <div class="lrs-kpi"><div class="lrs-kpi-v">${totalRT}s</div><div class="lrs-kpi-l">Total Time</div></div>
+      </div>
+      <table class="lrs-table">
+        <thead><tr><th>Q</th><th>SG</th><th>Type</th><th>Selected</th><th>Result</th><th>Score</th><th>RT</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="lrs-note">
+        <strong>Fields captured:</strong> score_raw · is_correct · response_time_sec · selected_key · hint_used
+      </div>
+    </div>`;
+  nav.innerHTML = `<button class="icon-btn" onclick="renderAll()">✕ Close Report</button>`;
 }
 
 function loadJsonFile(file) {
