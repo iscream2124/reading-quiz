@@ -3634,41 +3634,71 @@ async function simulateQuiz() {
     });
   }
 
+  function drag(from, to, cb) {
+    mv(from, () => {
+      cur.style.transform = 'translate(-50%,-50%) scale(.7)';
+      cur.style.background = 'rgba(124,58,237,1)';
+      mv(to, () => {
+        cur.style.transform = 'translate(-50%,-50%) scale(1)';
+        cur.style.background = 'rgba(124,58,237,0.85)';
+        setTimeout(cb, 300);
+      });
+    });
+  }
+
+  function dragSequence(cards, slots, i, cb) {
+    if (i >= cards.length || i >= slots.length) { cb(); return; }
+    drag(cards[i], slots[i], () => dragSequence(cards, slots, i + 1, cb));
+  }
+
   function stepQ() {
     setTimeout(() => {
       const stage = $('preview-stage');
       const q = quiz.questions[currentQuestionIndex];
 
-      // Pick targets based on question type
-      let targets = [];
-      if (q.type === 'emotion_mcq' || q.type === 'internal_response_mcq') {
-        targets = Array.from(stage.querySelectorAll('.option-chip'));
-      } else if (q.type === 'listen_scene_mcq') {
-        targets = Array.from(stage.querySelectorAll('.scene-grid img, .img-card'));
-      } else if (q.type === 'scene_word_unscramble') {
-        targets = Array.from(stage.querySelectorAll('.word-chip'));
-      } else {
-        targets = Array.from(stage.querySelectorAll('.scene-grid img, .img-card, .word-chip, .option-chip'));
+      if (q.type === 'story_sequence_drag') {
+        const cards = Array.from(stage.querySelectorAll('.scene-grid img, .scene-grid .img-card'));
+        const slots = Array.from(stage.querySelectorAll('.sequence-slots .slot'));
+        dragSequence(cards, slots, 0, goNext);
+        return;
       }
 
-      // Find correct option index
+      if (q.type === 'setting_slot_drag') {
+        const chips = Array.from(stage.querySelectorAll('.word-chip'));
+        const slots = Array.from(stage.querySelectorAll('.setting-slots .slot'));
+        dragSequence(chips, slots, 0, goNext);
+        return;
+      }
+
+      if (q.type === 'scene_word_unscramble') {
+        const chips = Array.from(stage.querySelectorAll('.word-chip'));
+        if (chips.length) {
+          let i = 0;
+          const next = () => { i++; if (i < chips.length) cl(chips[i], next); else goNext(); };
+          cl(chips[0], next);
+        } else goNext();
+        return;
+      }
+
+      // MCQ types
+      let targets = [];
+      if (q.type === 'listen_scene_mcq') {
+        targets = Array.from(stage.querySelectorAll('.scene-grid img, .img-card'));
+      } else {
+        targets = Array.from(stage.querySelectorAll('.option-chip'));
+      }
+
       const opts = q.interaction?.options || [];
       let ci = opts.findIndex(o => o.score >= 100 || o.isCorrect);
       if (ci < 0) ci = 0;
 
       const doClick = () => {
         const target = targets[Math.min(ci, targets.length - 1)];
-        if (target) {
-          cl(target, goNext);
-        } else {
-          goNext();
-        }
+        if (target) cl(target, goNext); else goNext();
       };
 
-      // Hover a decoy first if there are multiple targets
       if (targets.length > 1) {
-        const decoy = targets[ci === 0 ? 1 : 0];
-        mv(decoy, doClick);
+        mv(targets[ci === 0 ? 1 : 0], doClick);
       } else {
         doClick();
       }
