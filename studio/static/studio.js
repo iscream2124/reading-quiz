@@ -3575,17 +3575,12 @@ function simulateQuiz() {
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
 
-  let overlay = document.getElementById('simulate-overlay');
-  if (overlay) overlay.remove();
+  const stage = $('preview-stage');
+  stage.classList.add('simulating');
+  stage.innerHTML = `<iframe src="${url}" style="width:100%;height:100%;border:none;display:block;border-radius:12px;"></iframe>`;
 
-  overlay = document.createElement('div');
-  overlay.id = 'simulate-overlay';
-  overlay.innerHTML = `
-    <div class="simulate-modal">
-      <button class="simulate-close" onclick="document.getElementById('simulate-overlay').remove()">✕ Close</button>
-      <iframe src="${url}" class="simulate-iframe" allowfullscreen></iframe>
-    </div>`;
-  document.body.appendChild(overlay);
+  const nav = $('preview-nav');
+  nav.innerHTML = `<button class="icon-btn" onclick="$('preview-stage').classList.remove('simulating');renderCurrentQuestion();$('preview-nav').innerHTML=''">✕ Exit</button>`;
 }
 
 function loadJsonFile(file) {

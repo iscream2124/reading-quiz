@@ -663,11 +663,7 @@ textarea{min-height:210px;resize:vertical;line-height:1.45}
 .simulate-btn{background:#7c3aed;color:#fff;border-color:#7c3aed;font-weight:700}
 .simulate-btn:hover{background:#6d28d9;border-color:#6d28d9}
 .topbar-simulate{padding:10px 20px;font-size:15px;border-radius:999px;border:none;cursor:pointer;white-space:nowrap}
-#simulate-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center}
-.simulate-modal{position:relative;width:90vw;height:92vh;display:flex;flex-direction:column;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.4)}
-.simulate-close{position:absolute;top:12px;right:14px;z-index:1;background:#fff;border:1.5px solid #d1d5db;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;color:#374151}
-.simulate-close:hover{background:#f3f4f6}
-.simulate-iframe{flex:1;width:100%;border:none}
+.preview-stage.simulating{padding:0;overflow:hidden;border-radius:0;background:none}
 .review-box{
   margin-top:18px;
   padding-top:14px;
